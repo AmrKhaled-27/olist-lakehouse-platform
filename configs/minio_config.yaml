@@ -1,0 +1,50 @@
+# MinIO Storage & Lakehouse Bucket Configuration
+
+connection:
+  endpoint_url: "${MINIO_ENDPOINT}"
+  internal_endpoint_url: "${MINIO_INTERNAL_ENDPOINT}"
+  access_key: "${AWS_ACCESS_KEY_ID}"
+  secret_key: "${AWS_SECRET_ACCESS_KEY}"
+  region_name: "${MINIO_REGION}"
+  secure: false
+  use_ssl: false
+
+buckets:
+  bronze: "${MINIO_BUCKET_BRONZE}"
+  silver: "${MINIO_BUCKET_SILVER}"
+  gold: "${MINIO_BUCKET_GOLD}"
+
+paths:
+  bronze_raw: "raw"
+  bronze_tables: "tables"
+  silver_tables: "tables"
+  gold_marts: "marts"
+
+datasets:
+  - name: "orders"
+    file_pattern: "olist_orders_dataset.csv"
+    bronze_path: "raw/orders/olist_orders_dataset.csv"
+  - name: "order_items"
+    file_pattern: "olist_order_items_dataset.csv"
+    bronze_path: "raw/order_items/olist_order_items_dataset.csv"
+  - name: "customers"
+    file_pattern: "olist_customers_dataset.csv"
+    bronze_path: "raw/customers/olist_customers_dataset.csv"
+  - name: "order_payments"
+    file_pattern: "olist_order_payments_dataset.csv"
+    bronze_path: "raw/order_payments/olist_order_payments_dataset.csv"
+  - name: "order_reviews"
+    file_pattern: "olist_order_reviews_dataset.csv"
+    bronze_path: "raw/order_reviews/olist_order_reviews_dataset.csv"
+  - name: "products"
+    file_pattern: "olist_products_dataset.csv"
+    bronze_path: "raw/products/olist_products_dataset.csv"
+  - name: "sellers"
+    file_pattern: "olist_sellers_dataset.csv"
+    bronze_path: "raw/sellers/olist_sellers_dataset.csv"
+  - name: "geolocation"
+    file_pattern: "olist_geolocation_dataset.csv"
+    bronze_path: "raw/geolocation/olist_geolocation_dataset.csv"
+  - name: "product_category_name_translation"
+    file_pattern: "product_category_name_translation.csv"
+    bronze_path: "raw/product_category_name_translation/product_category_name_translation.csv"

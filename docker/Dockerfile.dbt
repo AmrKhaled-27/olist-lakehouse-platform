@@ -1,0 +1,27 @@
+# Dockerfile for dbt + DuckDB runner
+FROM python:3.11-slim-bookworm
+
+# Install system utilities and security updates
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /usr/app/dbt
+
+# Install dbt-core, dbt-duckdb, and supporting libraries
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir \
+    dbt-core>=1.8.0 \
+    dbt-duckdb>=1.8.0 \
+    duckdb>=1.1.0 \
+    boto3 \
+    pyyaml \
+    python-dotenv
+
+# Set default environment variables for dbt
+ENV DBT_PROFILES_DIR=/usr/app/dbt
+ENV PYTHONUNBUFFERED=1
+
+ENTRYPOINT ["dbt"]
+CMD ["--help"]

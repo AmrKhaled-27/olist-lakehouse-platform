@@ -1,0 +1,28 @@
+# PySpark and S3A / MinIO Connector Configuration
+
+app:
+  name: "Olist-Lakehouse-Processing"
+  master: "${SPARK_MASTER_URL:-local[*]}"
+
+resources:
+  driver_memory: "${SPARK_DRIVER_MEMORY:-2g}"
+  executor_memory: "${SPARK_EXECUTOR_MEMORY:-2g}"
+  executor_cores: "${SPARK_EXECUTOR_CORES:-2}"
+
+s3a:
+  # Hadoop S3A MinIO Filesystem Configuration
+  fs.s3a.endpoint: "${MINIO_INTERNAL_ENDPOINT:-http://minio:9000}"
+  fs.s3a.access.key: "${AWS_ACCESS_KEY_ID:-minioadmin}"
+  fs.s3a.secret.key: "${AWS_SECRET_ACCESS_KEY:-minioadmin}"
+  fs.s3a.path.style.access: "true"
+  fs.s3a.impl: "org.apache.hadoop.fs.s3a.S3AFileSystem"
+  fs.s3a.connection.ssl.enabled: "false"
+  fs.s3a.fast.upload: "true"
+  fs.s3a.aws.credentials.provider: "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider"
+
+sql:
+  spark.sql.session.timeZone: "UTC"
+  spark.sql.parquet.compression.codec: "snappy"
+  spark.sql.sources.partitionOverwriteMode: "dynamic"
+  spark.sql.adaptive.enabled: "true"
+  spark.sql.adaptive.coalescePartitions.enabled: "true"

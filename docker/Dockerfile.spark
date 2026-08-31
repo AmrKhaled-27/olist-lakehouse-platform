@@ -1,0 +1,34 @@
+# Dockerfile for Spark with Hadoop-AWS / S3A MinIO support
+FROM apache/spark:3.5.3
+
+USER root
+
+# Install system dependencies & curl for JAR downloading
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Pre-download Hadoop AWS & AWS Java SDK Bundle JARs into Spark classpath
+ARG HADOOP_VERSION=3.3.4
+ARG AWS_SDK_VERSION=1.12.262
+
+RUN curl -fSL "https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/${HADOOP_VERSION}/hadoop-aws-${HADOOP_VERSION}.jar" \
+    -o /opt/spark/jars/hadoop-aws-${HADOOP_VERSION}.jar && \
+    curl -fSL "https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/${AWS_SDK_VERSION}/aws-java-sdk-bundle-${AWS_SDK_VERSION}.jar" \
+    -o /opt/spark/jars/aws-java-sdk-bundle-${AWS_SDK_VERSION}.jar
+
+# Install Python requirements for Spark jobs
+WORKDIR /app
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir pyyaml python-dotenv boto3 minio pyarrow pandas pydantic
+
+# Create directories for logs and lakehouse local operations
+RUN mkdir -p /app/src /app/configs /app/data /opt/spark/events && \
+    chmod -R 777 /app /opt/spark/events
+
+USER spark
+WORKDIR /app
+
+ENV PYTHONPATH=/app
