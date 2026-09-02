@@ -46,6 +46,9 @@ ingest:
 ingest-kaggle:
 	.\.venv\Scripts\python.exe -m src.ingestion.ingest_bronze --download-kaggle
 
+transform-silver:
+	.\.venv\Scripts\python.exe -m src.spark_jobs.bronze_to_silver --all
+
 test:
 	.\.venv\Scripts\pytest.exe -v
 
