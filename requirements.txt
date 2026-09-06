@@ -21,6 +21,7 @@ tqdm>=4.66.0
 
 # Dashboard / BI
 streamlit>=1.37.0
+plotly>=5.20.0
 
 # Development, Quality & Testing
 pytest>=8.2.0

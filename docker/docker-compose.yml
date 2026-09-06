@@ -126,8 +126,25 @@ services:
       - MINIO_S3_ENDPOINT=minio:9000
     networks:
       - lakehouse-net
-    profiles:
-      - cli
+  # -------------------------------------------------------------------------
+  # Streamlit BI Analytics Dashboard
+  # -------------------------------------------------------------------------
+  streamlit:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.streamlit
+    container_name: olist-streamlit-dashboard
+    ports:
+      - "8501:8501"
+    volumes:
+      - ../src/dashboard:/app/src/dashboard
+      - ../data:/app/data
+    environment:
+      - DUCKDB_PATH=/app/data/gold_lakehouse.duckdb
+    networks:
+      - lakehouse-net
+    depends_on:
+      - minio
 
 networks:
   lakehouse-net:

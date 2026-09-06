@@ -58,6 +58,12 @@ dbt-run:
 dbt-test:
 	docker compose -f docker/docker-compose.yml run --rm dbt test
 
+dashboard:
+	.\.venv\Scripts\streamlit.exe run src/dashboard/app.py
+
+dashboard-docker:
+	docker compose -f docker/docker-compose.yml up -d --build streamlit
+
 test:
 	.\.venv\Scripts\pytest.exe -v
 
