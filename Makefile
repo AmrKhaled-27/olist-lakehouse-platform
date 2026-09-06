@@ -49,6 +49,15 @@ ingest-kaggle:
 transform-silver:
 	.\.venv\Scripts\python.exe -m src.spark_jobs.bronze_to_silver --all
 
+dbt-compile:
+	docker compose -f docker/docker-compose.yml run --rm dbt compile
+
+dbt-run:
+	docker compose -f docker/docker-compose.yml run --rm dbt run
+
+dbt-test:
+	docker compose -f docker/docker-compose.yml run --rm dbt test
+
 test:
 	.\.venv\Scripts\pytest.exe -v
 

@@ -14,10 +14,16 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir \
     dbt-core>=1.8.0 \
     dbt-duckdb>=1.8.0 \
-    duckdb>=1.1.0 \
+    duckdb==1.1.3 \
     boto3 \
     pyyaml \
     python-dotenv
+
+# Download DuckDB extensions directly over HTTPS to bypass unencrypted HTTP middlebox
+RUN mkdir -p /root/.duckdb/extensions/v1.1.3/linux_amd64_gcc4 && \
+    curl -sSL "https://extensions.duckdb.org/v1.1.3/linux_amd64_gcc4/httpfs.duckdb_extension.gz" | gzip -d > /root/.duckdb/extensions/v1.1.3/linux_amd64_gcc4/httpfs.duckdb_extension && \
+    curl -sSL "https://extensions.duckdb.org/v1.1.3/linux_amd64_gcc4/parquet.duckdb_extension.gz" | gzip -d > /root/.duckdb/extensions/v1.1.3/linux_amd64_gcc4/parquet.duckdb_extension && \
+    python3 -c "import duckdb; con = duckdb.connect(); con.execute('LOAD httpfs; LOAD parquet;'); print('Extensions verified successfully!')"
 
 # Set default environment variables for dbt
 ENV DBT_PROFILES_DIR=/usr/app/dbt

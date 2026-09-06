@@ -1,0 +1,36 @@
+name: "olist_analytics"
+version: "1.0.0"
+config-version: 2
+
+# Profile connecting to DuckDB and MinIO S3
+profile: "olist_lakehouse"
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# Materialization strategy across layers
+models:
+  olist_analytics:
+    # Staging models: Lightweight views over raw Silver Parquet files
+    staging:
+      +materialized: view
+      +schema: staging
+
+    # Core Dimensional models: Persistent tables representing the Star Schema
+    marts:
+      core:
+        +materialized: table
+        +schema: core
+
+      # Analytics Marts: Pre-aggregated dashboard-ready tables
+      analytics:
+        +materialized: table
+        +schema: analytics

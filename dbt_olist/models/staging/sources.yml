@@ -1,0 +1,50 @@
+version: 2
+
+sources:
+  - name: silver
+    description: "Cleaned, typed Parquet tables stored in MinIO Silver bucket."
+    tables:
+      - name: orders
+        description: "Cleaned orders with parsed timestamps and delivery metrics (partitioned by purchase_year/purchase_month)."
+        meta:
+          external_location: "s3://silver/tables/orders/**/*.parquet"
+
+      - name: order_items
+        description: "Line-item prices, freight values, product, and seller references."
+        meta:
+          external_location: "s3://silver/tables/order_items/*.parquet"
+
+      - name: customers
+        description: "Customer accounts and geographic location information."
+        meta:
+          external_location: "s3://silver/tables/customers/*.parquet"
+
+      - name: order_payments
+        description: "Payment methods, sequential indexes, installments, and values."
+        meta:
+          external_location: "s3://silver/tables/order_payments/*.parquet"
+
+      - name: order_reviews
+        description: "Customer satisfaction review scores (1 to 5) and feedback messages."
+        meta:
+          external_location: "s3://silver/tables/order_reviews/*.parquet"
+
+      - name: products
+        description: "Product catalog attributes including weights and dimensions."
+        meta:
+          external_location: "s3://silver/tables/products/*.parquet"
+
+      - name: sellers
+        description: "Merchant seller information and origin locations."
+        meta:
+          external_location: "s3://silver/tables/sellers/*.parquet"
+
+      - name: geolocation
+        description: "Deduplicated Brazilian zip code centroids (latitude/longitude)."
+        meta:
+          external_location: "s3://silver/tables/geolocation/**/*.parquet"
+
+      - name: product_category_name_translation
+        description: "Portuguese to English category translations."
+        meta:
+          external_location: "s3://silver/tables/product_category_name_translation/*.parquet"

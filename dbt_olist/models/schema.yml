@@ -1,0 +1,111 @@
+version: 2
+
+models:
+  # ---------------------------------------------------------------------------
+  # Staging Tests
+  # ---------------------------------------------------------------------------
+  - name: stg_orders
+    description: "Staging view of orders"
+    columns:
+      - name: order_id
+        description: "Primary key for orders"
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        tests:
+          - not_null
+
+  - name: stg_customers
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+      - name: customer_unique_id
+        tests:
+          - not_null
+
+  - name: stg_products
+    columns:
+      - name: product_id
+        tests:
+          - unique
+          - not_null
+
+  # ---------------------------------------------------------------------------
+  # Core Star Schema Tests
+  # ---------------------------------------------------------------------------
+  - name: dim_dates
+    description: "Calendar date dimension"
+    columns:
+      - name: date_day
+        tests:
+          - unique
+          - not_null
+      - name: date_key
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_products
+    description: "Product catalog dimension"
+    columns:
+      - name: product_id
+        tests:
+          - unique
+          - not_null
+
+  - name: fct_orders
+    description: "Central order-level transactions fact table"
+    columns:
+      - name: order_id
+        description: "Primary key of fct_orders"
+        tests:
+          - unique
+          - not_null
+      - name: order_status
+        description: "Standardized order status"
+        tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - 'delivered'
+                  - 'shipped'
+                  - 'canceled'
+                  - 'invoiced'
+                  - 'processing'
+                  - 'created'
+                  - 'approved'
+                  - 'unavailable'
+      - name: purchase_date_key
+        description: "Foreign key joining fct_orders to dim_dates"
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_dates')
+                field: date_key
+
+  # ---------------------------------------------------------------------------
+  # Analytics Marts Tests
+  # ---------------------------------------------------------------------------
+  - name: mart_monthly_sales
+    description: "Executive monthly sales scorecard"
+    columns:
+      - name: year_month
+        tests:
+          - unique
+          - not_null
+      - name: total_orders
+        tests:
+          - not_null
+
+  - name: mart_delivery_performance
+    description: "Logistics delivery performance by state route"
+    columns:
+      - name: origin_seller_state
+        tests:
+          - not_null
+      - name: destination_customer_state
+        tests:
+          - not_null
