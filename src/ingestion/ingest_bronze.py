@@ -138,17 +138,23 @@ class BronzeIngestionPipeline:
         logger.info("Target MinIO bucket: %s", self.bronze_bucket)
         logger.info("=" * 70)
 
-        # Trigger Kaggle download if requested
-        if download_kaggle:
-            self.download_from_kaggle(data_dir)
-
         # Ensure MinIO bucket exists
         if not dry_run:
             self.minio_client.create_bucket_if_not_exists(self.bronze_bucket)
 
-        # Discover datasets
+        # Discover datasets locally
         datasets = self.discover_local_datasets(data_dir)
 
+        # If no local datasets found, attempt Kaggle download if requested
+        if not dry_run and not datasets and download_kaggle:
+            logger.info(
+                "No local datasets found in '%s'. Attempting automated Kaggle download...",
+                data_dir,
+            )
+            if self.download_from_kaggle(data_dir):
+                datasets = self.discover_local_datasets(data_dir)
+
+        # Fallback to minimal sample datasets if still missing
         if not datasets and allow_sample_generation:
             logger.info("No datasets found in %s. Generating starter sample datasets...", data_dir)
             datasets = self.create_sample_datasets(data_dir)

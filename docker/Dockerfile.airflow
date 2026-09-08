@@ -1,0 +1,21 @@
+# Dockerfile for Apache Airflow with Docker CLI capability
+FROM apache/airflow:2.9.3-python3.11
+
+USER root
+
+# Install system dependencies and Docker CLI to orchestrate lakehouse containers
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    docker.io \
+    docker-compose-plugin \
+    && rm -rf /var/lib/apt/lists/*
+
+USER airflow
+
+# Install Airflow providers and lakehouse client dependencies
+RUN pip install --no-cache-dir \
+    apache-airflow-providers-docker \
+    boto3 \
+    python-dotenv \
+    kaggle \
+    duckdb==1.1.3

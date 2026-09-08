@@ -70,6 +70,7 @@ services:
     volumes:
       - ../src:/app/src
       - ../configs:/app/configs
+      - ../data:/app/data
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
     networks:
       - lakehouse-net
@@ -102,6 +103,7 @@ services:
     volumes:
       - ../src:/app/src
       - ../configs:/app/configs
+      - ../data:/app/data
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
     networks:
       - lakehouse-net
@@ -126,6 +128,9 @@ services:
       - MINIO_S3_ENDPOINT=minio:9000
     networks:
       - lakehouse-net
+    profiles:
+      - cli
+
   # -------------------------------------------------------------------------
   # Streamlit BI Analytics Dashboard
   # -------------------------------------------------------------------------
@@ -146,10 +151,145 @@ services:
     depends_on:
       - minio
 
+  # -------------------------------------------------------------------------
+  # Apache Airflow Metadata Database (PostgreSQL)
+  # -------------------------------------------------------------------------
+  airflow-postgres:
+    image: postgres:15-alpine
+    container_name: olist-airflow-postgres
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    volumes:
+      - airflow_postgres_data:/var/lib/postgresql/data
+    networks:
+      - lakehouse-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - airflow
+
+  # -------------------------------------------------------------------------
+  # Apache Airflow Init (DB migration & Admin user)
+  # -------------------------------------------------------------------------
+  airflow-init:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.airflow
+    container_name: olist-airflow-init
+    depends_on:
+      airflow-postgres:
+        condition: service_healthy
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@airflow-postgres:5432/airflow
+      - _AIRFLOW_DB_MIGRATE=true
+      - _AIRFLOW_WWW_USER_CREATE=true
+      - _AIRFLOW_WWW_USER_USERNAME=admin
+      - _AIRFLOW_WWW_USER_PASSWORD=admin
+      - _AIRFLOW_WWW_USER_ROLE=Admin
+      - _AIRFLOW_WWW_USER_EMAIL=admin@example.com
+    networks:
+      - lakehouse-net
+    command: version
+    profiles:
+      - airflow
+
+  # -------------------------------------------------------------------------
+  # Apache Airflow Webserver (UI on Port 8085)
+  # -------------------------------------------------------------------------
+  airflow-webserver:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.airflow
+    container_name: olist-airflow-webserver
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      airflow-postgres:
+        condition: service_healthy
+    ports:
+      - "8085:8080"
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@airflow-postgres:5432/airflow
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
+      - AIRFLOW__WEBSERVER__SECRET_KEY=olist_lakehouse_secret_key_2026
+      - PYTHONPATH=/workspace:/opt/airflow
+      - MINIO_ENDPOINT=${MINIO_INTERNAL_ENDPOINT:-http://minio:9000}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-minioadmin}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-minioadmin}
+      - MINIO_BUCKET_BRONZE=${MINIO_BUCKET_BRONZE:-bronze}
+      - KAGGLE_USERNAME=${KAGGLE_USERNAME:-}
+      - KAGGLE_KEY=${KAGGLE_KEY:-}
+    volumes:
+      - ../dags:/opt/airflow/dags
+      - ../logs:/opt/airflow/logs
+      - ../src:/opt/airflow/src
+      - ../configs:/opt/airflow/configs
+      - ../data:/opt/airflow/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ..:/workspace
+    working_dir: /workspace
+    user: "0:0"
+    networks:
+      - lakehouse-net
+    command: webserver
+    profiles:
+      - airflow
+
+  # -------------------------------------------------------------------------
+  # Apache Airflow Scheduler
+  # -------------------------------------------------------------------------
+  airflow-scheduler:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.airflow
+    container_name: olist-airflow-scheduler
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      airflow-postgres:
+        condition: service_healthy
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@airflow-postgres:5432/airflow
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
+      - AIRFLOW__WEBSERVER__SECRET_KEY=olist_lakehouse_secret_key_2026
+      - PYTHONPATH=/workspace:/opt/airflow
+      - MINIO_ENDPOINT=${MINIO_INTERNAL_ENDPOINT:-http://minio:9000}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-minioadmin}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-minioadmin}
+      - MINIO_BUCKET_BRONZE=${MINIO_BUCKET_BRONZE:-bronze}
+      - KAGGLE_USERNAME=${KAGGLE_USERNAME:-}
+      - KAGGLE_KEY=${KAGGLE_KEY:-}
+    volumes:
+      - ../dags:/opt/airflow/dags
+      - ../logs:/opt/airflow/logs
+      - ../src:/opt/airflow/src
+      - ../configs:/opt/airflow/configs
+      - ../data:/opt/airflow/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ..:/workspace
+    working_dir: /workspace
+    user: "0:0"
+    networks:
+      - lakehouse-net
+    command: scheduler
+    profiles:
+      - airflow
+
 networks:
   lakehouse-net:
     driver: bridge
 
 volumes:
   minio_data:
+    driver: local
+  airflow_postgres_data:
     driver: local

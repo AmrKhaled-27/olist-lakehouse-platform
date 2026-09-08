@@ -19,10 +19,12 @@ lib64/
 parts/
 sdist/
 var/
+logs/
 wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
 
 # Jupyter Notebooks & PySpark
 .ipynb_checkpoints

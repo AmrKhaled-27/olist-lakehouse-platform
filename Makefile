@@ -64,6 +64,18 @@ dashboard:
 dashboard-docker:
 	docker compose -f docker/docker-compose.yml up -d --build streamlit
 
+airflow-up:
+	docker compose -f docker/docker-compose.yml --profile airflow up -d --build
+
+airflow-down:
+	docker compose -f docker/docker-compose.yml --profile airflow stop airflow-webserver airflow-scheduler airflow-postgres
+
+airflow-logs:
+	docker compose -f docker/docker-compose.yml logs -f airflow-webserver airflow-scheduler
+
+airflow-trigger:
+	docker compose -f docker/docker-compose.yml exec airflow-webserver airflow dags trigger olist_lakehouse_pipeline
+
 test:
 	.\.venv\Scripts\pytest.exe -v
 
